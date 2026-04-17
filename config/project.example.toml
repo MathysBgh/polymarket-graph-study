@@ -1,0 +1,42 @@
+[project]
+name = "mlns-polymarket-graph-study"
+seed = 42
+
+[paths]
+markets_path = "data/raw/markets.csv"
+observations_path = "data/raw/observations.csv"
+duckdb_path = ""
+processed_dir = "data/processed"
+outputs_dir = "outputs"
+
+[data]
+source = "files"
+markets_table = "markets"
+observations_table = "observations"
+duckdb_markets_query = ""
+duckdb_observations_query = ""
+assets = ["BTC", "ETH"]
+contract_types = ["above", "below"]
+horizon_hours = 24
+path_window_hours = 24
+path_points = 6
+min_history_points = 3
+
+[split]
+train_fraction = 0.60
+validation_fraction = 0.20
+test_fraction = 0.20
+
+[graph]
+alpha = 0.70
+min_edge_weight = 0.20
+strike_scale = 0.15
+use_trajectory_similarity = true
+
+[model]
+inverse_regularization = 1.0
+max_iter = 5000
+
+[outputs]
+save_intermediate = true
+

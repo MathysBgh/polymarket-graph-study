@@ -1,0 +1,20 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Generate Synthetic Dataset",
+      "type": "shell",
+      "command": "py -3 -m mlns_project.cli.generate_synthetic --config config/project.synthetic.toml",
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Run MLNS Pipeline",
+      "type": "shell",
+      "command": "py -3 -m mlns_project.cli.run_pipeline --config config/project.synthetic.toml",
+      "group": "build",
+      "problemMatcher": []
+    }
+  ]
+}
+
