@@ -69,7 +69,47 @@ The prediction-market literature itself is largely calibration-focused \citep{wo
 
 \subsection{Data and Schema Mapping}
 
-The input is the v2.0 release of the \texttt{taut-arb-backtest} dataset --- a SQLite database (\texttt{backtest\_sample.db}, $\sim$1.6\,GB) covering April 2025 -- February 2026 across BTC, ETH, SOL, and XRP, with $30{,}180$ resolved markets, $1.05$M YES/NO price observations, $7.23$M Deribit options snapshots, and $29{,}864$ hourly OHLCV candles. We restrict to BTC and ETH \emph{above}/\emph{below} markets, leaving $8{,}913$ candidates. Every market is joined to the canonical schema (Table~\ref{tab:schema}) using a SQL adapter that maps \texttt{condition\_id} $\to$ \texttt{market\_id}, \texttt{threshold} $\to$ \texttt{strike}, \texttt{direction} $\to$ \texttt{contract\_type}, \texttt{outcome} $\to$ \texttt{label}, and derives microstructure features from \texttt{market\_prices}: $\texttt{mid\_price} = \texttt{yes\_price}$, $\texttt{spread} = |1 - \texttt{yes\_price} - \texttt{no\_price}|$ (the no-arbitrage gap), $\texttt{liquidity} = \texttt{volume}$, $\texttt{volume} = \texttt{trade\_count}$. The reference spot price comes from a one-hour join to the Deribit perpetual OHLCV close.
+The input is the v2.0 release of the \texttt{taut-arb-backtest} dataset --- a SQLite database (\texttt{backtest\_sample.db}, $\sim$1.6\,GB) covering April 2025 -- February 2026 across BTC, ETH, SOL, and XRP, with $30{,}180$ resolved markets, $1.05$M YES/NO price observations, $7.23$M Deribit options snapshots, and $29{,}864$ hourly OHLCV candles. Figure~\ref{fig:data} characterises the underlying Polymarket dataset: daily settlement counts, outcome distribution by direction, tradeable-market counts over time, top-of-book coverage, bid-ask spread distribution, and spread behaviour near settlement. We restrict to BTC and ETH \emph{above}/\emph{below} markets, leaving $8{,}913$ candidates. Every market is joined to the canonical schema (Table~\ref{tab:schema}) using a SQL adapter that maps \texttt{condition\_id} $\to$ \texttt{market\_id}, \texttt{threshold} $\to$ \texttt{strike}, \texttt{direction} $\to$ \texttt{contract\_type}, \texttt{outcome} $\to$ \texttt{label}, and derives microstructure features from \texttt{market\_prices}: $\texttt{mid\_price} = \texttt{yes\_price}$, $\texttt{spread} = |1 - \texttt{yes\_price} - \texttt{no\_price}|$ (the no-arbitrage gap), $\texttt{liquidity} = \texttt{volume}$, $\texttt{volume} = \texttt{trade\_count}$. The reference spot price comes from a one-hour join to the Deribit perpetual OHLCV close.
+
+\begin{figure}[t]
+\centering
+\begin{minipage}[t]{0.31\linewidth}
+\centering
+\includegraphics[width=\linewidth]{01_settlements_per_day.png}\\[-2pt]
+{\small (a) Daily settlements}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.31\linewidth}
+\centering
+\includegraphics[width=\linewidth]{04_outcome_distribution.png}\\[-2pt]
+{\small (b) Outcome distribution}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.31\linewidth}
+\centering
+\includegraphics[width=\linewidth]{06_tradeable_markets_over_time.png}\\[-2pt]
+{\small (c) Tradeable markets}
+\end{minipage}
+
+\vspace{4pt}
+
+\begin{minipage}[t]{0.31\linewidth}
+\centering
+\includegraphics[width=\linewidth]{02_book_coverage_by_week.png}\\[-2pt]
+{\small (d) Book coverage by week}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.31\linewidth}
+\centering
+\includegraphics[width=\linewidth]{03_spread_quality.png}\\[-2pt]
+{\small (e) Bid-ask spread distribution}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.31\linewidth}
+\centering
+\includegraphics[width=\linewidth]{08_spread_near_settlement.png}\\[-2pt]
+{\small (f) Spread near settlement}
+\end{minipage}
+
+\caption{Overview of the Polymarket BTC/ETH dataset (April 2025 -- February 2026). Settlement volume is concentrated on the daily cohort (a); the contract mix is dominated by \emph{above} markets, most of which resolve No (b). Tradeable-market counts (c) and weekly book coverage (d) confirm the dataset is fully populated across the full window. Spreads (e) are tight at the median and tighten further as markets approach settlement (f).}
+\label{fig:data}
+\end{figure}
 
 \begin{table}[t]
 \caption{Canonical schema produced by the SQLite adapter.}
