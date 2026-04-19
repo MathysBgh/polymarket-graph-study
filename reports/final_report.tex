@@ -39,7 +39,7 @@ Prediction markets are exchanges on which participants trade binary outcome cont
 
 These markets are nevertheless far from independent. On a typical day, ${\sim}25$ contracts settle on the same underlying asset, with strikes spanning a band around the spot price; they share the same generating process, the same liquidity providers, and the same informed traders. \emph{This structure is invisible to per-market calibration analysis.} Network science provides a natural language for it: correlation-based financial graphs \citep{mantegna1999, boginski2005, onnela2003} have repeatedly recovered sector communities, regime shifts, and influential nodes; node embedding methods such as \texttt{node2vec} \citep{grover2016} and graph convolutional networks \citep{kipf2017} have shown that network position carries predictive content beyond per-asset features in financial forecasting \citep{chen2018, zhou2025}.
 
-\textbf{This project asks a single question}: \emph{can within-cohort graph structure between same-day Polymarket binary contracts improve probabilistic prediction beyond the crowd-implied price?} We construct similarity graphs at the cohort level, compute both classical centrality and learned \texttt{node2vec} features, and compare three graph-augmented logistic regressions to the crowd baseline and a tabular microstructure baseline under a chronological, cohort-level split. Beyond settling the empirical question, the project demonstrates a reproducible, leakage-safe evaluation framework for graph-based prediction-market modelling that prior financial-network work has not addressed.
+\textbf{This project asks a single question}: \emph{can within-cohort graph structure between same-day Polymarket binary contracts improve probabilistic prediction beyond the crowd-implied price?} We construct similarity graphs at the cohort level, compute both classical centrality and learned \texttt{node2vec} features, and compare three graph-augmented logistic regressions to the crowd baseline and a tabular microstructure baseline under a chronological, cohort-level split. Beyond settling the empirical question, the project demonstrates a reproducible, leakage-safe evaluation framework for graph-based prediction-market modelling.
 
 % ============================================================
 \section{Problem Definition}
@@ -51,15 +51,15 @@ These markets are nevertheless far from independent. On a typical day, ${\sim}25
 
 \textbf{Prediction task.} Given a cut-off $\tau_m$ and information $\mathcal{I}_{\le \tau_m}^{C(m)}$ available within the cohort up to $\tau_m$, predict $\mathbb{P}(y_m = 1 \mid \mathcal{I})$. The objective is to minimise the Brier score $\mathrm{BS}(\hat{p}, y) = (\hat{p}-y)^2$ on a held-out test set; secondary metrics are log-loss and ECE (10 equal-width bins).
 
-\textbf{Leakage constraints.} Two constraints determine the experimental protocol. (i) Because all markets in $\mathcal{C}_{a,t}$ resolve from the same realisation of the underlying $S_{T_{a,t}}$, observing the outcome of any one market in the cohort effectively reveals all others; entire cohorts must therefore stay together in the train/validation/test partition. (ii) Within a cohort, all features used at $\tau_m$ must rely strictly on observations with timestamp $\le \tau_m$, including those used to build the cohort graph.
+\textbf{Leakage constraints.} (i) Because all markets in $\mathcal{C}_{a,t}$ resolve from the same realisation of the underlying $S_{T_{a,t}}$, observing the outcome of any one market in the cohort effectively reveals all others; entire cohorts must therefore stay together in the train/validation/test partition. (ii) Within a cohort, all features used at $\tau_m$ must rely strictly on observations with timestamp $\le \tau_m$, including those used to build the cohort graph.
 
 % ============================================================
 \section{Related Work}
 % ============================================================
 
-Financial-network analysis was pioneered by \citet{mantegna1999} with minimum spanning trees over equity correlation matrices; subsequent work extended the construction to dynamic settings and showed that correlation structure reorganises during crises \citep{onnela2003, isogai2017, fenn2012}. Statistical properties of the resulting market graphs --- degree distribution, clique and independent-set structure --- are analysed by \citet{boginski2005}. The same line of work has not been applied to prediction markets, where each ``node'' is itself a derivative on a shared spot factor rather than a distinct asset.
+Financial-network analysis was pioneered by \citet{mantegna1999} with minimum spanning trees over equity correlation matrices; subsequent work extended the construction to dynamic settings and showed that correlation structure reorganises during crises \citep{onnela2003, isogai2017, fenn2012}. Statistical properties of the resulting market graphs such as degree distribution, clique and independent-set structure, are analysed by \citet{boginski2005}. The same line of work has not been applied to prediction markets, where each ``node'' is itself a derivative on a shared spot factor rather than a distinct asset.
 
-The graph-learning side draws on \texttt{node2vec} \citep{grover2016}, a biased-random-walk Skip-gram method that interpolates between depth- and breadth-first neighbourhoods, and on graph convolutional networks \citep{kipf2017}. Both have been applied to financial forecasting: \citet{chen2018} use a corporation-relationship GCN for stock prediction, and \citet{zhou2025} propose an evolving multiscale GNN for cryptocurrency volatility. Our project sits at the intersection of these two threads --- per-cohort similarity graphs in the financial-network tradition, with \texttt{node2vec} embeddings as features. The closest published setup is \citet{chen2018}'s static corporation graph, which differs from ours in three respects: nodes are firms (not derivatives on a common factor), the prediction is regression on returns (not a probability), and there is no analogue of our same-day leakage constraint.
+The graph-learning side draws on \texttt{node2vec} \citep{grover2016}, a biased-random-walk Skip-gram method that interpolates between depth- and breadth-first neighbourhoods, and on graph convolutional networks \citep{kipf2017}. Both have been applied to financial forecasting: \citet{chen2018} use a corporation-relationship GCN for stock prediction, and \citet{zhou2025} propose an evolving multiscale GNN for cryptocurrency volatility. Our project sits at the intersection of these two wherein per-cohort similarity graphs in the financial-network tradition, with \texttt{node2vec} embeddings as features. The closest published setup is \citet{chen2018}'s static corporation graph, which differs from ours in three respects: nodes are firms (not derivatives on a common factor), the prediction is regression on returns (not a probability), and there is no analogue of our same-day leakage constraint.
 
 The prediction-market literature itself is largely calibration-focused \citep{wolfers2004} and treats each contract independently. To our knowledge no prior work computes graph features over related contracts on the same underlying as inputs to outcome prediction.
 
@@ -70,7 +70,7 @@ The prediction-market literature itself is largely calibration-focused \citep{wo
 
 \subsection{Data and Schema Mapping}
 
-The input is a SQLite database (\texttt{backtest\_sample.db}, $\sim$1.6\,GB) published as a release on the project repository\footnote{\url{https://github.com/MathysBgh/polymarket-graph-study/releases/tag/v1.0-data}} alongside the supplementary Deribit parquets. The database covers April 2025 -- February 2026 across BTC, ETH, SOL, and XRP, with $30{,}180$ resolved markets, $1.05$M YES/NO price observations, $7.23$M Deribit options snapshots, and $29{,}864$ hourly OHLCV candles. Figure~\ref{fig:data} characterises the underlying Polymarket dataset: daily settlement counts, outcome distribution by direction, tradeable-market counts over time, top-of-book coverage, bid-ask spread distribution, and spread behaviour near settlement. We restrict to BTC and ETH \emph{above}/\emph{below} markets, leaving $8{,}913$ candidates. Every market is joined to the canonical schema (Table~\ref{tab:schema}) using a SQL adapter that maps \texttt{condition\_id} $\to$ \texttt{market\_id}, \texttt{threshold} $\to$ \texttt{strike}, \texttt{direction} $\to$ \texttt{contract\_type}, \texttt{outcome} $\to$ \texttt{label}, and derives microstructure features from \texttt{market\_prices}: $\texttt{mid\_price} = \texttt{yes\_price}$, $\texttt{spread} = |1 - \texttt{yes\_price} - \texttt{no\_price}|$ (the no-arbitrage gap), $\texttt{liquidity} = \texttt{volume}$, $\texttt{volume} = \texttt{trade\_count}$. The reference spot price comes from a one-hour join to the Deribit perpetual OHLCV close.
+The input is a SQLite database (\texttt{backtest\_sample.db}, $\sim$1.6\,GB) published as a release on the project repository\footnote{\url{https://github.com/MathysBgh/polymarket-graph-study/releases/tag/v1.0-data}} alongside the supplementary Deribit parquets. The database covers April 2025 -- February 2026 across BTC, ETH, SOL, and XRP, with $30{,}180$ resolved markets, $1.05$M YES/NO price observations, $7.23$M Deribit options snapshots, and $29{,}864$ hourly OHLCV candles. Figure~\ref{fig:data} characterises the underlying Polymarket dataset: daily settlement counts, outcome distribution by direction, tradeable-market counts over time, top-of-book coverage, bid-ask spread distribution, and spread behaviour near settlement. We restrict to BTC and ETH \emph{above}/\emph{below} markets, leaving $8{,}913$ candidates. A SQL adapter joins each market to the canonical pipeline schema by performing the column renames and derivations summarised in Table~\ref{tab:schema}; the only non-trivial transformations are the no-arbitrage spread $|1 - \texttt{yes\_price} - \texttt{no\_price}|$ and the hour-bucketed left-join against the Deribit perpetual OHLCV table to attach a reference spot price.
 
 \begin{figure}[t]
 \centering
@@ -113,18 +113,30 @@ The input is a SQLite database (\texttt{backtest\_sample.db}, $\sim$1.6\,GB) pub
 \end{figure}
 
 \begin{table}[t]
-\caption{Canonical schema produced by the SQLite adapter.}
+\caption{Schema mapping from the upstream SQLite tables to the canonical pipeline schema. Direct copies are flagged \emph{rename}; the spread is a derived no-arbitrage gap; the spot anchor is matched on the snapshot hour.}
 \label{tab:schema}
 \begin{center}
 \small
 \begin{tabular}{@{}lll@{}}
 \toprule
-\textbf{Table} & \textbf{Columns} & \textbf{Source} \\
+\textbf{Canonical column}   & \textbf{Source}                                              & \textbf{Definition} \\
 \midrule
-\texttt{markets}      & \texttt{market\_id, asset, contract\_type,}                                & \texttt{markets} \\
-                       & \texttt{strike, settlement\_time, label}                                   & \\
-\texttt{observations} & \texttt{market\_id, timestamp, mid\_price,}                                & \texttt{market\_prices} \\
-                       & \texttt{spread, liquidity, volume, reference\_spot\_price}                 & $\bowtie$ \texttt{ohlcv} \\
+\multicolumn{3}{@{}l}{\emph{markets}} \\
+\texttt{market\_id}         & \texttt{markets.condition\_id}                                & rename \\
+\texttt{asset}              & \texttt{markets.asset}                                        & uppercased \\
+\texttt{contract\_type}     & \texttt{markets.direction}                                    & lowercased \\
+\texttt{strike}             & \texttt{markets.threshold}                                    & rename \\
+\texttt{settlement\_time}   & \texttt{markets.settlement\_date}                             & parsed as UTC \\
+\texttt{label}              & \texttt{markets.outcome}                                      & rename \\
+\midrule
+\multicolumn{3}{@{}l}{\emph{observations}} \\
+\texttt{market\_id}         & \texttt{market\_prices.condition\_id}                         & rename \\
+\texttt{timestamp}          & \texttt{market\_prices.timestamp}                             & seconds, parsed as UTC \\
+\texttt{mid\_price}         & \texttt{market\_prices.yes\_price}                            & direct \\
+\texttt{spread}             & $|1 - \texttt{yes\_price} - \texttt{no\_price}|$               & no-arbitrage gap \\
+\texttt{liquidity}          & \texttt{market\_prices.volume}                                & direct \\
+\texttt{volume}             & \texttt{market\_prices.trade\_count}                          & direct \\
+\texttt{reference\_spot\_price} & \texttt{ohlcv.close}                                       & matched on snapshot hour \\
 \bottomrule
 \end{tabular}
 \end{center}
