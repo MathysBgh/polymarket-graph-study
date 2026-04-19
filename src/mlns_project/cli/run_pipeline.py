@@ -11,7 +11,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--config",
         type=Path,
-        default=Path("config/project.synthetic.toml"),
+        default=Path("config/project.toml"),
         help="Path to the project TOML configuration file.",
     )
     return parser

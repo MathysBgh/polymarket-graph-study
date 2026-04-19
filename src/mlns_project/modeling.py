@@ -11,6 +11,7 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from .config import ProjectConfig
 from .evaluation import evaluate_predictions
+from .graphs import NODE2VEC_DIM, NODE2VEC_FEATURE_PREFIX
 
 BASE_NUMERIC_FEATURES = [
     "crowd_probability",
@@ -29,12 +30,16 @@ GRAPH_NUMERIC_FEATURES = [
     "neighbor_mean_spread",
 ]
 
+NODE2VEC_FEATURES = [f"{NODE2VEC_FEATURE_PREFIX}{i}" for i in range(NODE2VEC_DIM)]
+
 CATEGORICAL_FEATURES = ["asset", "contract_type"]
 
 PREDICTION_COLUMNS = {
     "Crowd baseline": "crowd_baseline",
     "Tabular model": "tabular_model",
-    "Graph model": "graph_model",
+    "Graph (centrality)": "graph_centrality_model",
+    "Graph (node2vec)": "graph_node2vec_model",
+    "Graph (combined)": "graph_combined_model",
 }
 
 
@@ -49,8 +54,16 @@ FEATURE_SPECS = {
         numeric=tuple(BASE_NUMERIC_FEATURES),
         categorical=tuple(CATEGORICAL_FEATURES),
     ),
-    "graph_model": FeatureSpec(
+    "graph_centrality_model": FeatureSpec(
         numeric=tuple(BASE_NUMERIC_FEATURES + GRAPH_NUMERIC_FEATURES),
+        categorical=tuple(CATEGORICAL_FEATURES),
+    ),
+    "graph_node2vec_model": FeatureSpec(
+        numeric=tuple(BASE_NUMERIC_FEATURES + NODE2VEC_FEATURES),
+        categorical=tuple(CATEGORICAL_FEATURES),
+    ),
+    "graph_combined_model": FeatureSpec(
+        numeric=tuple(BASE_NUMERIC_FEATURES + GRAPH_NUMERIC_FEATURES + NODE2VEC_FEATURES),
         categorical=tuple(CATEGORICAL_FEATURES),
     ),
 }

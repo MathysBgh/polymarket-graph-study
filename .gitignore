@@ -4,12 +4,23 @@ __pycache__/
 .ipynb_checkpoints/
 *.pyc
 *.egg-info/
+
+# Raw inputs ship via GitHub Releases, not the repo.
 data/raw/*
 !data/raw/.gitkeep
+
+# Large intermediate frames; small final artifacts (tables/figures) are tracked.
 data/processed/*
 !data/processed/.gitkeep
-outputs/figures/*
-!outputs/figures/.gitkeep
-outputs/tables/*
-!outputs/tables/.gitkeep
 outputs/output_manifest.json
+
+# LaTeX build artifacts.
+reports/*.aux
+reports/*.bbl
+reports/*.blg
+reports/*.fdb_latexmk
+reports/*.fls
+reports/*.log
+reports/*.out
+reports/*.synctex.gz
+reports/*.toc

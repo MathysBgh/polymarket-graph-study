@@ -12,6 +12,7 @@ dependencies = [
     "duckdb>=1.1",
     "matplotlib>=3.8",
     "networkx>=3.2",
+    "node2vec>=0.5",
     "numpy>=1.26",
     "pandas>=2.2",
     "scikit-learn>=1.5",

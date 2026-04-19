@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from itertools import combinations
+import logging
 import math
 
 import networkx as nx
@@ -8,6 +9,12 @@ import numpy as np
 import pandas as pd
 
 from .config import ProjectConfig
+
+NODE2VEC_DIM = 16
+NODE2VEC_WALK_LENGTH = 10
+NODE2VEC_NUM_WALKS = 40
+NODE2VEC_WINDOW = 5
+NODE2VEC_FEATURE_PREFIX = "graph_emb_"
 
 
 def _build_path_signatures(history: pd.DataFrame, config: ProjectConfig) -> dict[str, np.ndarray | None]:
@@ -148,5 +155,62 @@ def build_graph_features(
 
         graphs[str(cohort_id)] = graph
 
-    return pd.DataFrame(feature_rows), graphs
+    centrality_features = pd.DataFrame(feature_rows)
+    embedding_features = compute_node2vec_features(graphs, config)
+    if embedding_features.empty:
+        return centrality_features, graphs
+    return centrality_features.merge(embedding_features, on="market_id", how="left"), graphs
+
+
+def _build_union_graph(graphs: dict[str, nx.Graph]) -> nx.Graph:
+    union = nx.Graph()
+    for graph in graphs.values():
+        union.add_nodes_from(graph.nodes(data=True))
+        union.add_edges_from((u, v, data) for u, v, data in graph.edges(data=True))
+    return union
+
+
+def compute_node2vec_features(
+    graphs: dict[str, nx.Graph],
+    config: ProjectConfig,
+) -> pd.DataFrame:
+    union = _build_union_graph(graphs)
+    if union.number_of_edges() == 0:
+        return pd.DataFrame()
+
+    try:
+        from node2vec import Node2Vec
+    except ImportError:
+        logging.getLogger(__name__).warning(
+            "node2vec is not installed; skipping embedding features."
+        )
+        return pd.DataFrame()
+
+    nodes_with_edges = [node for node in union.nodes if union.degree(node) > 0]
+    embedding_subgraph = union.subgraph(nodes_with_edges).copy()
+
+    n2v = Node2Vec(
+        embedding_subgraph,
+        dimensions=NODE2VEC_DIM,
+        walk_length=NODE2VEC_WALK_LENGTH,
+        num_walks=NODE2VEC_NUM_WALKS,
+        workers=1,
+        seed=config.seed,
+        quiet=True,
+    )
+    model = n2v.fit(window=NODE2VEC_WINDOW, min_count=1, batch_words=4, seed=config.seed)
+
+    feature_columns = [f"{NODE2VEC_FEATURE_PREFIX}{i}" for i in range(NODE2VEC_DIM)]
+    rows: list[dict[str, float | str]] = []
+    zero_vector = [float("nan")] * NODE2VEC_DIM
+    for node in union.nodes:
+        if model.wv.has_index_for(str(node)):
+            vector = [float(value) for value in model.wv[str(node)]]
+        else:
+            vector = zero_vector
+        record: dict[str, float | str] = {"market_id": str(node)}
+        for column, value in zip(feature_columns, vector, strict=True):
+            record[column] = value
+        rows.append(record)
+    return pd.DataFrame(rows)
 

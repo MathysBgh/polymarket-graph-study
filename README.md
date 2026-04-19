@@ -1,98 +1,75 @@
-# MLNS Project Workspace
+# Polymarket Graph Study (MLNS 2026)
 
-This repository is a VS Code-first Python workspace for the MLNS final project:
+Code and final report for the CentraleSupélec MLNS 2026 final project:
 
-**Does graph structure between related Polymarket crypto contracts improve probabilistic prediction beyond the crowd-implied price?**
+> **Can graph structure between related Polymarket crypto contracts improve probabilistic prediction beyond the crowd-implied price?**
 
-The workspace is designed to stay usable even when the real data is not stored locally yet. It includes:
+Team: Alexandre Dalban, Mathys Bagnah, Wacil Lakbir.
 
-- a clean `src/` package for the full pipeline
-- a central TOML configuration entrypoint
-- a synthetic data generator for end-to-end verification
-- notebook and report assets written in English
-- output generation for the final experiment table, descriptive tables, graph figures, calibration plots, and ablation results
-
-## Project layout
+## Layout
 
 ```text
 .
-|-- config/
-|   |-- project.example.toml
-|   `-- project.synthetic.toml
+|-- config/project.toml          # pipeline configuration
 |-- data/
-|   |-- raw/
-|   `-- processed/
-|-- notebooks/
+|   |-- raw/                     # input databases (gitignored, see Releases)
+|   `-- processed/               # generated tables (gitignored)
+|-- notebooks/                   # walkthrough notebook with rendered outputs
 |-- outputs/
-|   |-- figures/
-|   `-- tables/
-|-- reports/
-|-- src/mlns_project/
-|   |-- cli/
-|   `-- ...
-`-- tests/
+|   |-- figures/                 # cohort graph, calibration plot
+|   `-- tables/                  # dataset summary, results table
+|-- reports/final_report.tex     # ICLR 2025 final report source
+|-- src/mlns_project/            # pipeline package
+|   `-- cli/run_pipeline.py      # main entrypoint
+|-- MLNS_Project_Proposal.pdf    # project proposal (deliverable)
+`-- pyproject.toml
 ```
 
-## Expected raw data schema
+## Reproducing the experiment
 
-The file-based pipeline expects two canonical tables:
+1. Create a Python 3.11+ environment and install the package:
 
-### `markets`
+   ```bash
+   py -3 -m pip install -e .
+   ```
 
-- `market_id`
-- `asset`
-- `contract_type`
-- `strike`
-- `settlement_time`
-- `label`
+2. Download the dataset from this repository's GitHub Releases page and unpack
+   into `data/raw/`:
 
-### `observations`
+   ```bash
+   gh release download v1.0-data --pattern "backtest_sample.db.gz"
+   gunzip backtest_sample.db.gz
+   mv backtest_sample.db data/raw/
+   ```
 
-- `market_id`
-- `timestamp`
-- `mid_price`
-- `spread`
-- `liquidity`
-- `volume`
-- `reference_spot_price`
+   The release also ships the optional Deribit options/futures parquet files
+   used for supplementary analysis (`options_5m.parquet`, `futures_5m.parquet`,
+   `ohlcv_5m.parquet`, `funding_8h.parquet`, `dvol_5m.parquet`).
 
-You can provide these as `.csv` or `.parquet` files, or load them from DuckDB with SQL aliases that produce the same canonical columns.
+3. Run the pipeline:
 
-## Quick start in VS Code
+   ```bash
+   py -3 -m mlns_project.cli.run_pipeline --config config/project.toml
+   ```
 
-1. Create and activate a Python environment.
-2. Install the package:
+   This regenerates `data/processed/{experiment_table,predictions,metrics_by_split}.csv`
+   and the figures and tables under `outputs/`.
 
-```powershell
-py -3 -m pip install -e .[dev]
-```
+4. Open `notebooks/01_experiment_walkthrough.ipynb` to inspect the results
+   interactively.
 
-3. Generate a synthetic dataset for local verification:
+## Final report
 
-```powershell
-py -3 -m mlns_project.cli.generate_synthetic --config config/project.synthetic.toml
-```
+Source in `reports/final_report.tex` (ICLR 2025 template, drop into Overleaf
+or compile locally with `latexmk -pdf reports/final_report.tex`).
 
-4. Run the full pipeline:
+## Data schema
 
-```powershell
-py -3 -m mlns_project.cli.run_pipeline --config config/project.synthetic.toml
-```
-
-5. Open `notebooks/01_experiment_walkthrough.ipynb` in VS Code to inspect outputs.
-
-## Using the real dataset later
-
-- Keep the code unchanged.
-- Copy `config/project.example.toml` to a working config file.
-- Point `markets_path` / `observations_path`, or `duckdb_path`, to the real data source.
-- If the DuckDB schema differs from the canonical schema, update the SQL queries in the config so they return the required aliases.
-
-## Main outputs
-
-- `data/processed/experiment_table.csv`
-- `outputs/tables/dataset_summary.csv`
-- `outputs/tables/results_table.csv`
-- `outputs/figures/example_cohort_graph.png`
-- `outputs/figures/calibration_plot.png`
-
+The pipeline expects the `taut-arb-backtest` v2.0 SQLite schema. The relevant
+tables are `markets` (one row per resolved Polymarket binary contract),
+`market_prices` (YES/NO time series), and `ohlcv` (hourly Deribit perpetual
+candles for the spot anchor). The SQL adapter in
+`src/mlns_project/data_loading.py` maps these to the canonical columns
+(`market_id`, `asset`, `contract_type`, `strike`, `settlement_time`, `label`
+for markets; `mid_price`, `spread`, `liquidity`, `volume`,
+`reference_spot_price` for observations).

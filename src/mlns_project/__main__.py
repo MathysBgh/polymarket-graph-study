@@ -6,7 +6,7 @@ from .pipeline import run_pipeline
 
 
 def main() -> None:
-    run_pipeline(Path("config/project.synthetic.toml"))
+    run_pipeline(Path("config/project.toml"))
 
 
 if __name__ == "__main__":
