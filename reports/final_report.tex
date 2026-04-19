@@ -15,7 +15,8 @@
 
 \author{
   Alexandre Dalban \quad Mathys Bagnah \quad Wacil Lakbir \\
-  CentraleSup\'{e}lec --- Machine Learning in Network Science (MLNS)
+  CentraleSup\'{e}lec --- Machine Learning in Network Science (MLNS) \\
+  Code and data: \url{https://github.com/MathysBgh/polymarket-graph-study}
 }
 
 \graphicspath{{../outputs/figures/}}
@@ -69,7 +70,7 @@ The prediction-market literature itself is largely calibration-focused \citep{wo
 
 \subsection{Data and Schema Mapping}
 
-The input is the v2.0 release of the \texttt{taut-arb-backtest} dataset --- a SQLite database (\texttt{backtest\_sample.db}, $\sim$1.6\,GB) covering April 2025 -- February 2026 across BTC, ETH, SOL, and XRP, with $30{,}180$ resolved markets, $1.05$M YES/NO price observations, $7.23$M Deribit options snapshots, and $29{,}864$ hourly OHLCV candles. Figure~\ref{fig:data} characterises the underlying Polymarket dataset: daily settlement counts, outcome distribution by direction, tradeable-market counts over time, top-of-book coverage, bid-ask spread distribution, and spread behaviour near settlement. We restrict to BTC and ETH \emph{above}/\emph{below} markets, leaving $8{,}913$ candidates. Every market is joined to the canonical schema (Table~\ref{tab:schema}) using a SQL adapter that maps \texttt{condition\_id} $\to$ \texttt{market\_id}, \texttt{threshold} $\to$ \texttt{strike}, \texttt{direction} $\to$ \texttt{contract\_type}, \texttt{outcome} $\to$ \texttt{label}, and derives microstructure features from \texttt{market\_prices}: $\texttt{mid\_price} = \texttt{yes\_price}$, $\texttt{spread} = |1 - \texttt{yes\_price} - \texttt{no\_price}|$ (the no-arbitrage gap), $\texttt{liquidity} = \texttt{volume}$, $\texttt{volume} = \texttt{trade\_count}$. The reference spot price comes from a one-hour join to the Deribit perpetual OHLCV close.
+The input is a SQLite database (\texttt{backtest\_sample.db}, $\sim$1.6\,GB) published as a release on the project repository\footnote{\url{https://github.com/MathysBgh/polymarket-graph-study/releases/tag/v1.0-data}} alongside the supplementary Deribit parquets. The database covers April 2025 -- February 2026 across BTC, ETH, SOL, and XRP, with $30{,}180$ resolved markets, $1.05$M YES/NO price observations, $7.23$M Deribit options snapshots, and $29{,}864$ hourly OHLCV candles. Figure~\ref{fig:data} characterises the underlying Polymarket dataset: daily settlement counts, outcome distribution by direction, tradeable-market counts over time, top-of-book coverage, bid-ask spread distribution, and spread behaviour near settlement. We restrict to BTC and ETH \emph{above}/\emph{below} markets, leaving $8{,}913$ candidates. Every market is joined to the canonical schema (Table~\ref{tab:schema}) using a SQL adapter that maps \texttt{condition\_id} $\to$ \texttt{market\_id}, \texttt{threshold} $\to$ \texttt{strike}, \texttt{direction} $\to$ \texttt{contract\_type}, \texttt{outcome} $\to$ \texttt{label}, and derives microstructure features from \texttt{market\_prices}: $\texttt{mid\_price} = \texttt{yes\_price}$, $\texttt{spread} = |1 - \texttt{yes\_price} - \texttt{no\_price}|$ (the no-arbitrage gap), $\texttt{liquidity} = \texttt{volume}$, $\texttt{volume} = \texttt{trade\_count}$. The reference spot price comes from a one-hour join to the Deribit perpetual OHLCV close.
 
 \begin{figure}[t]
 \centering
