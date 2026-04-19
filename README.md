@@ -65,7 +65,7 @@ or compile locally with `latexmk -pdf reports/final_report.tex`).
 
 ## Data schema
 
-The pipeline expects the `taut-arb-backtest` v2.0 SQLite schema. The relevant
+The pipeline expects the `taut-arb-backtest` v2.0 SQLite schema (https://github.com/ADnocap/taut-arb-backtest). The relevant
 tables are `markets` (one row per resolved Polymarket binary contract),
 `market_prices` (YES/NO time series), and `ohlcv` (hourly Deribit perpetual
 candles for the spot anchor). The SQL adapter in
